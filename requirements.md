@@ -41,9 +41,14 @@
 - **PRIORITY: Ensure the entire app is center-aligned (horizontally) in the viewport on all screen sizes.** Currently the app is left-aligned and needs to be fixed.
 
 ### Design Aesthetic
-- Adopt a modern, minimalist design approach.
-- Ensure clean, organized visual presentation.
-- Replace the default system font with a more appealing, legible typeface (e.g. a sans-serif like "Roboto" or "Open Sans").
+- Adopt a Warhammer 40k grimdark theme throughout the application.
+- **Color Scheme:** Dark, industrial colors including blacks, golds, blood reds, and industrial grays. Use dark backgrounds with metallic accents.
+- **Visual Style:** Gothic and ornate industrial aesthetic with jagged edges, skull motifs, and military insignia elements.
+- **Typography:** Bold, imposing fonts with a militaristic feel to reinforce the grimdark atmosphere.
+- **Imagery & Iconography:** Incorporate Warhammer 40k visual elements such as skulls, eagles, and gothic decorative accents throughout the UI.
+- **Tone:** Labels and text should have a grimdark and militaristic tone appropriate to the 40k universe.
+- Ensure clean, organized visual presentation within the grimdark aesthetic.
+- Replace the default system font with a more appealing, legible typeface suited to the militaristic theme.
 
 ### Inputs and Controls
 - Style input boxes so they look polished and visually distinct from bland HTML defaults.

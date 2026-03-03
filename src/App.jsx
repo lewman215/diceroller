@@ -123,18 +123,18 @@ function App() {
 
   return (
     <div className="dice-roller-container">
-      <h1>Dice Roller</h1>
+      <h1>⚔️ IMPERIAL DICE ROLLER ⚔️</h1>
       {/* Requirement 8: Tab navigation */}
       <div className="tabs">
         <button
           className={tab === 'hits' ? 'roll-btn' : ''}
           onClick={() => setTab('hits')}
-        >Hits</button>
+        >HITS</button>
         <button
           className={tab === 'wounds' ? 'roll-btn' : ''}
           onClick={() => setTab('wounds')}
           disabled={hits === 0}
-        >Wounds</button>
+        >WOUNDS</button>
       </div>
 
       {tab === 'hits' && (
@@ -142,7 +142,7 @@ function App() {
           <div className="inputs">
             {/* Requirement 2: Custom up/down controls for dice count */}
             <div className="control-group">
-              <label>Number of Dice:</label>
+              <label>SOLDIERS: </label>
               <div className="spinner-control">
                 <button className="spinner-btn" onClick={decrementNumDice}>−</button>
                 <input
@@ -162,7 +162,7 @@ function App() {
 
             {/* Requirement 2: Custom up/down controls for threshold */}
             <div className="control-group">
-              <label>Hit Threshold (1-6):</label>
+              <label>STRENGTH THRESHOLD (1-6):</label>
               <div className="spinner-control">
                 <button className="spinner-btn" onClick={decrementThreshold}>−</button>
                 <input
@@ -181,16 +181,16 @@ function App() {
             </div>
 
             <div className="button-group">
-              <button className="roll-btn" onClick={handleRoll} disabled={rolling || !numDice || !threshold}>{rolling ? 'Rolling...' : 'Roll Dice'}</button>
+              <button className="roll-btn" onClick={handleRoll} disabled={rolling || !numDice || !threshold}>{rolling ? 'ADVANCING...' : 'ENGAGE ENEMY'}</button>
               {/* Requirement 7: Reset/refresh button */}
-              <button className="roll-btn reset-btn" onClick={handleReset}>Refresh</button>
+              <button className="roll-btn reset-btn" onClick={handleReset}>REGROUP</button>
             </div>
           </div>
           {results.length > 0 && (
             <div className="results">
-              <h2>Results</h2>
+              <h2>BATTLE RESULTS</h2>
               <p>
-                Hits{threshold ? ` (≥ ${threshold})` : ''}: <strong>{hits}</strong>
+                SOLDIERS STANDING{threshold ? ` (≥ ${threshold})` : ''}: <strong>{hits}</strong>
               </p>
               <div className="dice-list">
                 {results.map((value, idx) => (
@@ -208,7 +208,7 @@ function App() {
           <div className="inputs">
             {/* Requirement 2: Custom up/down controls for strength */}
             <div className="control-group">
-              <label>Strength:</label>
+              <label>ATTACKER STRENGTH:</label>
               <div className="spinner-control">
                 <button className="spinner-btn" onClick={() => setStrength(Math.max(1, Number(strength) - 1) || '')}>−</button>
                 <input
@@ -228,7 +228,7 @@ function App() {
 
             {/* Requirement 2: Custom up/down controls for toughness */}
             <div className="control-group">
-              <label>Toughness:</label>
+              <label>TARGET TOUGHNESS:</label>
               <div className="spinner-control">
                 <button className="spinner-btn" onClick={() => setToughness(Math.max(1, Number(toughness) - 1) || '')}>−</button>
                 <input
@@ -247,22 +247,22 @@ function App() {
             </div>
 
             <div className="button-group">
-              <button className="roll-btn" onClick={handleRollWounds} disabled={hits === 0 || rolling || !strength || !toughness}>{rolling ? 'Rolling...' : 'Roll Wounds'}</button>
-              <button className="roll-btn reset-btn" onClick={handleReset}>Refresh</button>
+              <button className="roll-btn" onClick={handleRollWounds} disabled={hits === 0 || rolling || !strength || !toughness}>{rolling ? 'CALCULATING...' : 'INFLICT WOUNDS'}</button>
+              <button className="roll-btn reset-btn" onClick={handleReset}>REGROUP</button>
             </div>
           </div>
           <div style={{ marginBottom: '1em' }}>
-            <strong>Dice to roll for wounds: {hits}</strong>
+            <strong>WOUNDS TO ALLOCATE: {hits}</strong>
             <br />
             <span>
-            Wound threshold: {strength && toughness ? `${getWoundThreshold(Number(strength), Number(toughness))}+` : '-'}
+            WOUND THRESHOLD: {strength && toughness ? `${getWoundThreshold(Number(strength), Number(toughness))}+` : '-'}
           </span>
           </div>
           {woundResults.length > 0 && (
             <div className="results">
-              <h2>Wounds</h2>
+              <h2>⚰️ CASUALTIES ⚰️</h2>
               <p>
-                Wounds{strength && toughness ? ` (≥ ${getWoundThreshold(Number(strength), Number(toughness))})` : ''}: <strong>{wounds}</strong>
+                ENEMY FALLEN{strength && toughness ? ` (≥ ${getWoundThreshold(Number(strength), Number(toughness))})` : ''}: <strong>{wounds}</strong>
               </p>
               <div className="dice-list">
                 {woundResults.map((value, idx) => {
