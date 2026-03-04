@@ -1,71 +1,177 @@
-#root {
-  max-width: 1280px;
+/* container and layout tweaks for better spacing */
+.dice-roller-container {
+  max-width: 600px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  border: 3px solid #D4AF37;
+  border-radius: 2px;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.8);
+  position: relative;
+}
+
+.dice-roller-container h1 {
+  color: #D4AF37;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  letter-spacing: 2px;
+}
+
+/* tab navigation */
+.tabs {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #D4AF37;
+  padding-bottom: 1rem;
+}
+
+.tabs button {
+  background: #1a1a1a;
+  color: #D4AF37;
+  border: 2px solid #D4AF37;
+  padding: 0.6em 1.2em;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.tabs button:hover:not(:disabled) {
+  background: #D4AF37;
+  color: #0a0a0a;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+}
+
+/* control group for spinner inputs */
+.control-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-group label {
+  font-weight: 700;
+  font-size: 0.9em;
+  color: #D4AF37;
+  letter-spacing: 1px;
+}
+
+/* spinner control - custom up/down buttons for number inputs (Requirement 2) */
+.spinner-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid #D4AF37;
+  border-radius: 0px;
+  padding: 0.25rem;
+  background: rgba(10, 10, 10, 0.7);
+  box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.1);
+}
+
+.spinner-input {
+  width: 60px;
+  height: 40px;
   text-align: center;
-}
-
-.logo {
-  height: 6em;
-
-
-  .dice-list span {
-    display: inline-block;
-    width: 2em;
-    height: 2em;
-    line-height: 2em;
-    background: #f3f3f3;
-    border-radius: 6px;
-    font-size: 1.2em;
-    font-weight: 600;
-    text-align: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    transition: transform 0.2s cubic-bezier(.68,-0.55,.27,1.55), background 0.2s;
-  }
-  .dice-list .hit {
-    background: #646cff;
-    color: #fff;
-    transform: scale(1.15) rotate(-10deg);
-  }
-  .dice-list span {
-    animation: dice-roll 0.5s;
-  }
-  @keyframes dice-roll {
-    0% { transform: scale(1) rotate(0deg); }
-    20% { transform: scale(1.2) rotate(10deg); }
-    40% { transform: scale(0.9) rotate(-10deg); }
-    60% { transform: scale(1.1) rotate(8deg); }
-    80% { transform: scale(1) rotate(-8deg); }
-    100% { transform: scale(1) rotate(0deg); }
-  }
-
-  margin-top: 0.5em;
-  padding: 0.5em;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  width: 100px;
-    .dice-list span {
-      width: 1.5em;
-      height: 1.5em;
-      font-size: 1em;
-    }
-  color: #fff;
+  font-size: 1.1em;
+  font-weight: 700;
   border: none;
-  border-radius: 6px;
-  font-size: 1em;
-  cursor: pointer;
-  margin-top: 0.5em;
-  transition: background 0.2s;
-}
-.roll-btn:hover {
-  background: #4b52c7;
+  background: transparent;
+  color: #D4AF37;
+  outline: none;
 }
 
+.spinner-input::placeholder {
+  color: rgba(212, 175, 55, 0.4);
+}
+
+.spinner-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.2em;
+  font-weight: 700;
+  background: #2a2a2a;
+  color: #D4AF37;
+  border: 1px solid #D4AF37;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.spinner-btn:hover {
+  background: #D4AF37;
+  color: #0a0a0a;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.spinner-btn:active {
+  transform: scale(0.95);
+}
+
+.spinner-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* input section */
+.inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(10, 10, 10, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 0px;
+}
+
+/* button group for roll / refresh */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+/* results styling */
 .results {
   margin-top: 2em;
   text-align: center;
+  animation: fadeIn 0.3s ease;
+  background: rgba(139, 0, 0, 0.1);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  padding: 1.5rem;
+  border-radius: 0px;
 }
 
+.results h2 {
+  color: #D4AF37;
+  letter-spacing: 2px;
+}
+
+.results p {
+  color: #E8D7B8;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* dice list styling */
 .dice-list {
   display: flex;
   flex-wrap: wrap;
@@ -73,28 +179,32 @@
   justify-content: center;
   margin-top: 1em;
 }
-/* Dice animation effect */
+
 .dice-list span {
   display: inline-block;
   width: 2em;
   height: 2em;
   line-height: 2em;
-  background: #f3f3f3;
-  border-radius: 6px;
+  background: #2a2a2a;
+  border: 2px solid #D4AF37;
+  border-radius: 0px;
   font-size: 1.2em;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  color: #D4AF37;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.3), inset 0 0 4px rgba(0, 0, 0, 0.5);
   transition: transform 0.2s cubic-bezier(.68,-0.55,.27,1.55), background 0.2s;
-}
-.dice-list .hit {
-  background: #646cff;
-  color: #fff;
-  transform: scale(1.15) rotate(-10deg);
-}
-.dice-list span {
   animation: dice-roll 0.5s;
 }
+
+.dice-list .hit {
+  background: #8B0000;
+  color: #D4AF37;
+  border-color: #D4AF37;
+  transform: scale(1.15) rotate(-10deg);
+  box-shadow: 0 0 15px rgba(139, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
 @keyframes dice-roll {
   0% { transform: scale(1) rotate(0deg); }
   20% { transform: scale(1.2) rotate(10deg); }
@@ -102,6 +212,76 @@
   60% { transform: scale(1.1) rotate(8deg); }
   80% { transform: scale(1) rotate(-8deg); }
   100% { transform: scale(1) rotate(0deg); }
+}
+
+.roll-btn {
+  background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+  color: #D4AF37;
+  border: 2px solid #D4AF37;
+  min-width: 140px;
+  padding: 0.7em 1.5em;
+  font-size: 0.95em;
+  font-weight: 700;
+  border-radius: 0px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.roll-btn:hover:not(:disabled) {
+  background: #D4AF37;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+  transform: translateY(-2px);
+}
+
+.roll-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.roll-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.roll-btn.reset-btn {
+  border-color: #8B0000;
+  color: #8B0000;
+  box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+}
+
+.roll-btn.reset-btn:hover:not(:disabled) {
+  background: #8B0000;
+  color: #D4AF37;
+  box-shadow: 0 0 20px rgba(139, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: light) {
+  .dice-roller-container {
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e0 100%);
+  }
+
+  .spinner-control {
+    border-color: #D4AF37;
+    background: rgba(212, 175, 55, 0.08);
+  }
+
+  .spinner-input {
+    color: #8B6914;
+  }
+
+  .dice-list span {
+    background: #e8e8e0;
+    color: #8B6914;
+    border-color: #D4AF37;
+  }
+
+  .dice-list .hit {
+    background: #8B0000;
+    color: #D4AF37;
+  }
 }
 
 @media (max-width: 600px) {
@@ -114,12 +294,15 @@
     height: 1.5em;
     font-size: 1em;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  .inputs {
+    gap: 1rem;
+  }
+  .button-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .roll-btn {
+    width: 100%;
+    min-width: unset;
+  }
 }
