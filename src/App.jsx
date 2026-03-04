@@ -2,6 +2,15 @@
 import React, { useState } from 'react';
 import './App.css';
 
+// Requirement 9 & 10: Sound effect for dice rolling
+function playDiceRollSound() {
+  // Play a realistic dice roll sound from file
+  // Use correct file name from public/sounds
+  const audio = new window.Audio('/sounds/Rolling Dice.mp3');
+  audio.volume = 0.7;
+  audio.play();
+}
+
 function rollDice(numDice) {
   return Array.from({ length: numDice }, () => Math.floor(Math.random() * 6) + 1);
 }
@@ -20,7 +29,8 @@ function App() {
   // Requirement 1, 2, 7: Inputs and reset
   // track inputs as strings so we can clear them and meet reset requirement
   const [numDice, setNumDice] = useState('');
-  const [threshold, setThreshold] = useState('');
+  // Threshold always starts at 1+
+  const [threshold, setThreshold] = useState('1');
   const [results, setResults] = useState([]);
   const [rolling, setRolling] = useState(false);
   const [hits, setHits] = useState(0);
@@ -41,13 +51,14 @@ function App() {
     const current = Number(numDice) || 0;
     setNumDice(Math.max(1, current - 1));
   };
+  // Only allow 1+ to 6+
   const incrementThreshold = () => {
-    const current = Number(threshold) || 0;
-    setThreshold(Math.min(6, current + 1));
+    const current = Number(threshold) || 1;
+    setThreshold(Math.min(6, current + 1).toString());
   };
   const decrementThreshold = () => {
-    const current = Number(threshold) || 0;
-    setThreshold(Math.max(1, current - 1));
+    const current = Number(threshold) || 1;
+    setThreshold(Math.max(1, current - 1).toString());
   };
 
   // Requirement 3, 4, 5: Roll dice and count hits
@@ -57,6 +68,8 @@ function App() {
     const t = Number(threshold);
     if (!n || !t) return; // invalid inputs
     setRolling(true);
+    // Requirement 9 & 10: Play sound effect when rolling
+    playDiceRollSound();
     const animationFrames = 10;
     let frame = 0;
     const animate = () => {
@@ -81,6 +94,8 @@ function App() {
     const t = Number(toughness);
     if (!s || !t) return;
     setRolling(true);
+    // Requirement 9 & 10: Play sound effect when rolling
+    playDiceRollSound();
     const animationFrames = 10;
     let frame = 0;
     const animate = () => {
@@ -102,7 +117,7 @@ function App() {
   // Requirement 7: Reset/refresh button handler
   const handleReset = () => {
     setNumDice('');
-    setThreshold('');
+    setThreshold('1');
     setResults([]);
     setHits(0);
     setTab('hits');
@@ -123,7 +138,7 @@ function App() {
 
   return (
     <div className="dice-roller-container">
-      <h1>⚔️ IMPERIAL DICE ROLLER ⚔️</h1>
+      <h1>IMPERIAL DICE ROLLER</h1>
       {/* Requirement 8: Tab navigation */}
       <div className="tabs">
         <button
@@ -142,7 +157,7 @@ function App() {
           <div className="inputs">
             {/* Requirement 2: Custom up/down controls for dice count */}
             <div className="control-group">
-              <label>SOLDIERS: </label>
+              <label>ATTACKS: </label>
               <div className="spinner-control">
                 <button className="spinner-btn" onClick={decrementNumDice}>−</button>
                 <input
@@ -162,18 +177,25 @@ function App() {
 
             {/* Requirement 2: Custom up/down controls for threshold */}
             <div className="control-group">
-              <label>STRENGTH THRESHOLD (1-6):</label>
+              <label>WS/BS:</label>
               <div className="spinner-control">
                 <button className="spinner-btn" onClick={decrementThreshold}>−</button>
                 <input
                   type="text"
                   inputMode="numeric"
                   className="spinner-input"
-                  placeholder="0"
-                  value={threshold}
+                  placeholder="1+"
+                  value={threshold ? `${threshold}+` : ''}
                   onChange={(e) => {
-                    const v = e.target.value;
-                    setThreshold(v === '' ? '' : Math.max(1, Math.min(6, Number(v))));
+                    // Accept input like '4+' or '4', strip trailing plus
+                    let v = e.target.value.replace(/\+$/, '');
+                    // Only allow 1-6
+                    if (v === '' || isNaN(Number(v))) {
+                      setThreshold('1');
+                    } else {
+                      let num = Math.max(1, Math.min(6, Number(v)));
+                      setThreshold(num.toString());
+                    }
                   }}
                 />
                 <button className="spinner-btn" onClick={incrementThreshold}>+</button>
@@ -190,7 +212,7 @@ function App() {
             <div className="results">
               <h2>BATTLE RESULTS</h2>
               <p>
-                SOLDIERS STANDING{threshold ? ` (≥ ${threshold})` : ''}: <strong>{hits}</strong>
+                Successful Hits: <strong>{hits}</strong>
               </p>
               <div className="dice-list">
                 {results.map((value, idx) => (
@@ -262,7 +284,7 @@ function App() {
             <div className="results">
               <h2>⚰️ CASUALTIES ⚰️</h2>
               <p>
-                ENEMY FALLEN{strength && toughness ? ` (≥ ${getWoundThreshold(Number(strength), Number(toughness))})` : ''}: <strong>{wounds}</strong>
+                ENEMY FALLEN: <strong>{wounds}</strong>
               </p>
               <div className="dice-list">
                 {woundResults.map((value, idx) => {

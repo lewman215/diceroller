@@ -194,7 +194,9 @@
   color: #D4AF37;
   box-shadow: 0 0 8px rgba(212, 175, 55, 0.3), inset 0 0 4px rgba(0, 0, 0, 0.5);
   transition: transform 0.2s cubic-bezier(.68,-0.55,.27,1.55), background 0.2s;
-  animation: dice-roll 0.5s;
+  animation: dice-roll-upright 0.6s cubic-bezier(.68,-0.55,.27,1.55);
+  perspective: 1000px;
+  will-change: transform;
 }
 
 .dice-list .hit {
@@ -205,13 +207,37 @@
   box-shadow: 0 0 15px rgba(139, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.4);
 }
 
-@keyframes dice-roll {
-  0% { transform: scale(1) rotate(0deg); }
-  20% { transform: scale(1.2) rotate(10deg); }
-  40% { transform: scale(0.9) rotate(-10deg); }
-  60% { transform: scale(1.1) rotate(8deg); }
-  80% { transform: scale(1) rotate(-8deg); }
-  100% { transform: scale(1) rotate(0deg); }
+@keyframes dice-roll-upright {
+  0% {
+    transform: scale(0.1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    opacity: 0.2;
+    filter: blur(2px) brightness(1.5);
+  }
+  10% {
+    transform: scale(1.2) rotateX(360deg) rotateY(180deg) rotateZ(90deg);
+    opacity: 0.7;
+    filter: blur(1.5px) brightness(1.2);
+  }
+  30% {
+    transform: scale(0.9) rotateX(720deg) rotateY(540deg) rotateZ(270deg);
+    opacity: 0.8;
+    filter: blur(1px) brightness(1.1);
+  }
+  60% {
+    transform: scale(1.1) rotateX(1080deg) rotateY(900deg) rotateZ(450deg);
+    opacity: 1;
+    filter: blur(0.5px) brightness(1);
+  }
+  80% {
+    transform: scale(1.05) rotateX(1440deg) rotateY(1260deg) rotateZ(630deg);
+    opacity: 1;
+    filter: blur(0.2px) brightness(1);
+  }
+  100% {
+    transform: scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    opacity: 1;
+    filter: none;
+  }
 }
 
 .roll-btn {

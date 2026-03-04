@@ -1,4 +1,4 @@
-# Developer Agent Instructions
+## Developer Agent Instructions
 
 ## Purpose
 This file provides instructions for the developer agent responsible for implementing project requirements.
