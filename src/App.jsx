@@ -26,8 +26,8 @@ function getWoundThreshold(strength, toughness) {
   return 4; // fallback
 }
 
-function App() {
 
+function App() {
   // Requirement 1, 2, 7: Inputs and reset
   // track inputs as strings so we can clear them and meet reset requirement
   const [numDice, setNumDice] = useState('');
@@ -36,6 +36,10 @@ function App() {
   const [results, setResults] = useState([]);
   const [rolling, setRolling] = useState(false);
   const [hits, setHits] = useState(0);
+
+  // Animation state: only true for 0.6s after a roll
+  const [justRolledHits, setJustRolledHits] = useState(false);
+  const [justRolledWounds, setJustRolledWounds] = useState(false);
 
   // Requirement 8: Wounds tab state
   const [tab, setTab] = useState('hits'); // 'hits' or 'wounds'
@@ -68,16 +72,16 @@ function App() {
     const t = Number(threshold);
     const animate = () => {
       if (frame < animationFrames) {
-        // For animation, show random numbers for the misses, keep hits unchanged
         setResults((prevResults) => prevResults.map((v, i) => originalResults[i] < t ? Math.floor(Math.random() * 6) + 1 : v));
         frame++;
         setTimeout(animate, 50);
       } else {
-        // On the last frame, actually re-roll the original misses
         const rerolled = originalResults.map((v) => (v < t ? Math.floor(Math.random() * 6) + 1 : v));
         setResults(rerolled);
         setHits(rerolled.filter((d) => d >= t).length);
         setRolling(false);
+        setJustRolledHits(true);
+        setTimeout(() => setJustRolledHits(false), 600);
       }
     };
     animate();
@@ -109,20 +113,19 @@ function App() {
     playDiceRollSound();
     const animationFrames = 6;
     let frame = 0;
-    // Store the original results so we only re-roll the original 1s at the end
     const originalResults = [...results];
     const animate = () => {
       if (frame < animationFrames) {
-        // For animation, show random numbers for the 1s, keep others unchanged
         setResults((prevResults) => prevResults.map((v, i) => originalResults[i] === 1 ? Math.floor(Math.random() * 6) + 1 : v));
         frame++;
         setTimeout(animate, 50);
       } else {
-        // On the last frame, actually re-roll the original 1s
         const rerolled = originalResults.map((v) => (v === 1 ? Math.floor(Math.random() * 6) + 1 : v));
         setResults(rerolled);
         setHits(rerolled.filter((d) => d >= Number(threshold)).length);
         setRolling(false);
+        setJustRolledHits(true);
+        setTimeout(() => setJustRolledHits(false), 600);
       }
     };
     animate();
@@ -130,12 +133,10 @@ function App() {
 
   // Requirement 3, 4, 5: Roll dice and count hits
   const handleRoll = () => {
-    // convert input strings to numbers
     const n = Number(numDice);
     const t = Number(threshold);
-    if (!n || !t) return; // invalid inputs
+    if (!n || !t) return;
     setRolling(true);
-    // Requirement 9 & 10: Play sound effect when rolling
     playDiceRollSound();
     const animationFrames = 10;
     let frame = 0;
@@ -149,6 +150,8 @@ function App() {
         setResults(dice);
         setHits(dice.filter((d) => d >= t).length);
         setRolling(false);
+        setJustRolledHits(true);
+        setTimeout(() => setJustRolledHits(false), 600);
       }
     };
     animate();
@@ -156,12 +159,10 @@ function App() {
 
   // Requirement 8: Roll wounds dice
   const handleRollWounds = () => {
-    // ensure numeric strength/toughness before rolling
     const s = Number(strength);
     const t = Number(toughness);
     if (!s || !t) return;
     setRolling(true);
-    // Requirement 9 & 10: Play sound effect when rolling
     playDiceRollSound();
     const animationFrames = 10;
     let frame = 0;
@@ -172,9 +173,10 @@ function App() {
         setTimeout(animate, 50);
       } else {
         const woundDice = rollDice(hits);
-        const woundThreshold = getWoundThreshold(s, t);
         setWoundResults(woundDice);
         setRolling(false);
+        setJustRolledWounds(true);
+        setTimeout(() => setJustRolledWounds(false), 600);
       }
     };
     animate();
@@ -290,7 +292,14 @@ function App() {
               </div>
               <div className="dice-list">
                 {results.map((value, idx) => (
-                  <span key={idx} className={value >= Number(threshold) ? 'hit' : ''}>{value}</span>
+                  <span
+                    key={idx}
+                    className={
+                      (justRolledHits ? 'dice-anim ' : '') + (value >= Number(threshold) ? 'hit' : '')
+                    }
+                  >
+                    {value}
+                  </span>
                 ))}
               </div>
             </div>
@@ -373,11 +382,16 @@ function App() {
                 SUCCESSFUL WOUNDS: <strong>{wounds}</strong>
               </p>
               <div className="dice-list">
-                {woundResults.map((value, idx) => {
-                  return (
-                    <span key={idx} className={woundThreshold && value >= woundThreshold ? 'hit' : ''}>{value}</span>
-                  );
-                })}
+                {woundResults.map((value, idx) => (
+                  <span
+                    key={idx}
+                    className={
+                      (justRolledWounds ? 'dice-anim ' : '') + (woundThreshold && value >= woundThreshold ? 'hit' : '')
+                    }
+                  >
+                    {value}
+                  </span>
+                ))}
               </div>
             </div>
           )}
