@@ -42,7 +42,13 @@ function App() {
   const [strength, setStrength] = useState('');
   const [toughness, setToughness] = useState('');
   const [woundResults, setWoundResults] = useState([]);
-  const [wounds, setWounds] = useState(0);
+
+  const woundThreshold = strength && toughness
+    ? getWoundThreshold(Number(strength), Number(toughness))
+    : null;
+  const wounds = woundThreshold
+    ? woundResults.filter((d) => d >= woundThreshold).length
+    : 0;
 
   // Recalculate hits when threshold or results change
   React.useEffect(() => {
@@ -168,7 +174,6 @@ function App() {
         const woundDice = rollDice(hits);
         const woundThreshold = getWoundThreshold(s, t);
         setWoundResults(woundDice);
-        setWounds(woundDice.filter((d) => d >= woundThreshold).length);
         setRolling(false);
       }
     };
@@ -185,7 +190,6 @@ function App() {
     setStrength('');
     setToughness('');
     setWoundResults([]);
-    setWounds(0);
     // Requirement 7: All input boxes emptied, settings reset, results cleared
   };
 
@@ -194,7 +198,6 @@ function App() {
   // eslint-disable-next-line
   React.useEffect(() => {
     setWoundResults([]);
-    setWounds(0);
   }, [hits]);
 
   return (
@@ -361,19 +364,18 @@ function App() {
               border: '1.5px solid #D4AF37',
             }}>
               <span style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>SUCCESSFUL ATTACKS: {hits}</span>
-              <span style={{ textAlign: 'center', minWidth: '180px' }}>TO WOUND: {strength && toughness ? `${getWoundThreshold(Number(strength), Number(toughness))}+` : '-'}</span>
+              <span style={{ textAlign: 'center', minWidth: '180px' }}>TO WOUND: {woundThreshold ? `${woundThreshold}+` : '-'}</span>
             </div>
           </div>
           {woundResults.length > 0 && (
             <div className="results">
               <p style={{ color: '#D4AF37', fontWeight: 700, fontSize: '1.1em', letterSpacing: '1px', marginBottom: '0.5em' }}>
-                Successful Wounds: <strong>{wounds}</strong>
+                SUCCESSFUL WOUNDS: <strong>{wounds}</strong>
               </p>
               <div className="dice-list">
                 {woundResults.map((value, idx) => {
-                  const wt = strength && toughness ? getWoundThreshold(Number(strength), Number(toughness)) : 0;
                   return (
-                    <span key={idx} className={value >= wt ? 'hit' : ''}>{value}</span>
+                    <span key={idx} className={woundThreshold && value >= woundThreshold ? 'hit' : ''}>{value}</span>
                   );
                 })}
               </div>
