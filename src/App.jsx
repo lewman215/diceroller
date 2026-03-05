@@ -27,37 +27,7 @@ function getWoundThreshold(strength, toughness) {
 }
 
 function App() {
-      // Recalculate hits when threshold or results change
-      React.useEffect(() => {
-        if (results.length > 0) {
-          setHits(results.filter((d) => d >= Number(threshold)).length);
-        }
-      }, [threshold, results]);
-    // User Request: Re-roll all dice that did not meet the WS/BS threshold
-    const handleRerollMisses = () => {
-      if (results.length === 0) return;
-      setRolling(true);
-      playDiceRollSound();
-      const animationFrames = 6;
-      let frame = 0;
-      const originalResults = [...results];
-      const t = Number(threshold);
-      const animate = () => {
-        if (frame < animationFrames) {
-          // For animation, show random numbers for the misses, keep hits unchanged
-          setResults((prevResults) => prevResults.map((v, i) => originalResults[i] < t ? Math.floor(Math.random() * 6) + 1 : v));
-          frame++;
-          setTimeout(animate, 50);
-        } else {
-          // On the last frame, actually re-roll the original misses
-          const rerolled = originalResults.map((v) => (v < t ? Math.floor(Math.random() * 6) + 1 : v));
-          setResults(rerolled);
-          setHits(rerolled.filter((d) => d >= t).length);
-          setRolling(false);
-        }
-      };
-      animate();
-    };
+
   // Requirement 1, 2, 7: Inputs and reset
   // track inputs as strings so we can clear them and meet reset requirement
   const [numDice, setNumDice] = useState('');
@@ -73,6 +43,39 @@ function App() {
   const [toughness, setToughness] = useState('');
   const [woundResults, setWoundResults] = useState([]);
   const [wounds, setWounds] = useState(0);
+
+  // Recalculate hits when threshold or results change
+  React.useEffect(() => {
+    if (results.length > 0) {
+      setHits(results.filter((d) => d >= Number(threshold)).length);
+    }
+  }, [threshold, results]);
+
+  // User Request: Re-roll all dice that did not meet the WS/BS threshold
+  const handleRerollMisses = () => {
+    if (results.length === 0) return;
+    setRolling(true);
+    playDiceRollSound();
+    const animationFrames = 6;
+    let frame = 0;
+    const originalResults = [...results];
+    const t = Number(threshold);
+    const animate = () => {
+      if (frame < animationFrames) {
+        // For animation, show random numbers for the misses, keep hits unchanged
+        setResults((prevResults) => prevResults.map((v, i) => originalResults[i] < t ? Math.floor(Math.random() * 6) + 1 : v));
+        frame++;
+        setTimeout(animate, 50);
+      } else {
+        // On the last frame, actually re-roll the original misses
+        const rerolled = originalResults.map((v) => (v < t ? Math.floor(Math.random() * 6) + 1 : v));
+        setResults(rerolled);
+        setHits(rerolled.filter((d) => d >= t).length);
+        setRolling(false);
+      }
+    };
+    animate();
+  };
 
   // Requirement 2: Increment/decrement handlers for dice count and threshold
   const incrementNumDice = () => {
