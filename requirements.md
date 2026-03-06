@@ -8,8 +8,13 @@
 2. Users can set a hit threshold (1–6, labeled "WS/BS") using a custom spinner. Input is clamped to 1–6 and always shown as N+.
 3. Rolling generates random D6 results for the specified number of dice. Each die is shown individually.
 4. The app counts and displays how many dice meet or exceed the hit threshold ("Successful Hits"). Hits are visually highlighted.
-    - The Hits tab includes a "Critical" spinner to the right of "WS/BS" using the same 1–6 range and N+ display, defaulting to 6+.
+    - The Hits tab includes a "Critical" spinner to the right of "WS/BS" using a 2–6 range and N+ display, defaulting to 6+.
     - Hit dice that meet or exceed the critical threshold are visually identified as critical hits.
+    - The Hits tab includes a "Sustained Hits" control row between the tab buttons and the main hit input controls.
+    - The "Sustained Hits" row contains a main toggle button and three linked value buttons labeled 1, 2, and 3.
+    - The main toggle button is visually distinct when enabled.
+    - Exactly one of the value buttons is always selected, and the default selected value is 1.
+    - When "Sustained Hits" is enabled, each critical hit adds 1, 2, or 3 automatic additional hits based on the selected sustained value.
 5. Dice results summary shows the count of each face (1–6) after rolling.
     - On the Hits tab, each face at or above the current critical threshold shows a small flame indicator in the summary row, and this updates live when the critical threshold changes.
 6. The interface is clear, center-aligned, and uses large, accessible controls. All controls are styled for clarity and feedback.
@@ -42,6 +47,7 @@
 - The app uses a dark, Warhammer 40k-inspired theme (black, gold, red, gray) with bold, militaristic fonts.
 - Numeric fields (dice, threshold, strength, toughness) use custom spinner controls.
 - Buttons and controls have hover/active effects and are grouped symmetrically.
+- The empty summary space above the Hits controls is used for the "Sustained Hits" toggle group.
 - Switching between Hits, Wounds, and Saves tabs uses a smooth layered transition with eased motion so tab changes feel noticeably softer without slowing interaction.
 - Hits, Wounds, and Saves use a consistent tab content layout so summaries, controls, and action buttons stay in stable positions when switching tabs.
 - When roll results appear on Hits, Wounds, or Saves, the results section enters with a short smooth animation instead of appearing instantly.

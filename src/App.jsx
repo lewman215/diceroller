@@ -67,6 +67,8 @@ function App() {
   const [results, setResults] = useState([]);
   const [rolling, setRolling] = useState(false);
   const [rollingHitIndexes, setRollingHitIndexes] = useState([]);
+  const [sustainedHitsEnabled, setSustainedHitsEnabled] = useState(false);
+  const [sustainedHitsValue, setSustainedHitsValue] = useState(1);
 
   // Requirement 10/11: Track workflow state across Hits, Wounds, and Saves tabs.
   const [tab, setTab] = useState('hits');
@@ -79,8 +81,11 @@ function App() {
   const [rollingSaveIndexes, setRollingSaveIndexes] = useState([]);
   const previousWounds = useRef(null);
 
-  const hits = results.filter((die) => die >= Number(threshold)).length;
   const criticalThreshold = Number(critical);
+  const baseHits = results.filter((die) => die >= Number(threshold)).length;
+  const criticalHits = results.filter((die) => die >= criticalThreshold).length;
+  const sustainedBonusHits = sustainedHitsEnabled ? criticalHits * sustainedHitsValue : 0;
+  const hits = baseHits + sustainedBonusHits;
   const woundThreshold = strength && toughness
     ? getWoundThreshold(Number(strength), Number(toughness))
     : null;
@@ -284,13 +289,15 @@ function App() {
 
   const decrementCritical = () => {
     const current = Number(critical) || 6;
-    setCritical(Math.max(1, current - 1).toString());
+    setCritical(Math.max(2, current - 1).toString());
   };
 
   const handleReset = () => {
     setNumDice('1');
     setThreshold('1');
     setCritical('6');
+    setSustainedHitsEnabled(false);
+    setSustainedHitsValue(1);
     setResults([]);
     setRolling(false);
     setRollingHitIndexes([]);
@@ -308,7 +315,35 @@ function App() {
     if (tab === 'hits') {
       return (
         <div className="tab-content-shell">
-          <div className="tab-summary-slot tab-summary-slot-empty" aria-hidden="true" />
+          <div className="tab-summary-slot">
+            <div className="hits-toggle-wrap">
+              <div className="hits-toggle-bar" role="group" aria-label="Sustained Hits controls">
+                <button
+                  type="button"
+                  className={`hits-toggle-button${sustainedHitsEnabled ? ' hits-toggle-button-active' : ''}`}
+                  onClick={() => setSustainedHitsEnabled((current) => !current)}
+                  aria-pressed={sustainedHitsEnabled}
+                >
+                  SUSTAINED HITS
+                </button>
+
+                <div className="hits-toggle-values" role="group" aria-label="Sustained Hits value">
+                  {[1, 2, 3].map((value) => (
+                    <button
+                      type="button"
+                      key={value}
+                      className={`hits-value-button${sustainedHitsValue === value ? ' hits-value-button-active' : ''}`}
+                      onClick={() => setSustainedHitsValue(value)}
+                      aria-pressed={sustainedHitsValue === value}
+                      disabled={!sustainedHitsEnabled && sustainedHitsValue !== value}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="tab-controls-slot">
             <div className="inputs">
@@ -374,7 +409,7 @@ function App() {
                         setCritical('6');
                         return;
                       }
-                      setCritical(Math.max(1, Math.min(6, Number(rawValue))).toString());
+                      setCritical(Math.max(2, Math.min(6, Number(rawValue))).toString());
                     }}
                   />
                   <button className="spinner-btn" onClick={incrementCritical}>+</button>
@@ -407,9 +442,11 @@ function App() {
           <div className="tab-results-slot">
             {results.length > 0 && (
               <div className="results results-enter">
-                <p className="result-total">
-                  SUCCESSFUL HITS: <strong>{hits}</strong>
-                </p>
+                <div className="result-summary-row">
+                  <p className="result-total result-stat-card result-stat-card--hits">
+                    SUCCESSFUL HITS: <strong>{hits}</strong>
+                  </p>
+                </div>
 
                 <FaceSummary dice={results} criticalThreshold={criticalThreshold} />
 
@@ -528,9 +565,11 @@ function App() {
           <div className="tab-results-slot">
             {woundResults.length > 0 && (
               <div className="results results-enter">
-                <p className="result-total">
-                  SUCCESSFUL WOUNDS: <strong>{wounds}</strong>
-                </p>
+                <div className="result-summary-row">
+                  <p className="result-total result-stat-card result-stat-card--wounds">
+                    SUCCESSFUL WOUNDS: <strong>{wounds}</strong>
+                  </p>
+                </div>
                 <FaceSummary dice={woundResults} />
                 <div className="dice-list">
                   {woundResults.map((value, index) => (
@@ -621,10 +660,10 @@ function App() {
           {saveResults.length > 0 && (
             <div className="results results-enter">
               <div className="result-summary-row">
-                <p className="result-total">
-                  SAVED: <strong>{saved}</strong>
+                <p className="result-total result-stat-card result-stat-card--saved">
+                  SAVED WOUNDS: <strong>{saved}</strong>
                 </p>
-                <p className="result-total">
+                <p className="result-total result-stat-card result-stat-card--unsaved">
                   UNSAVED WOUNDS: <strong>{unsavedWounds}</strong>
                 </p>
               </div>
