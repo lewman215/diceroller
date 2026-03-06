@@ -1,15 +1,22 @@
-
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
-// Requirement 9 & 10: Sound effect for dice rolling
-function playDiceRollSound() {
-  // Play a realistic dice roll sound from file
-  // Use correct file name from public/sounds
+const diceRollAudioPool = Array.from({ length: 3 }, () => {
   const audio = new window.Audio('/sounds/Rolling Dice.mp3');
+  audio.preload = 'auto';
   audio.volume = 0.7;
-  audio.play();
+  return audio;
+});
+
+let diceRollAudioIndex = 0;
+
+function playDiceRollSound() {
+  const audio = diceRollAudioPool[diceRollAudioIndex];
+  diceRollAudioIndex = (diceRollAudioIndex + 1) % diceRollAudioPool.length;
+  audio.currentTime = 0;
+  audio.play().catch(() => {
+    // Ignore blocked autoplay/playback interruptions.
+  });
 }
 
 function rollDice(numDice) {
@@ -17,231 +24,237 @@ function rollDice(numDice) {
 }
 
 function getWoundThreshold(strength, toughness) {
-  // Requirement 8: Calculate wound threshold
   if (strength >= 2 * toughness) return 2;
   if (strength > toughness) return 3;
   if (strength === toughness) return 4;
   if (strength < toughness && strength > toughness / 2) return 5;
   if (strength <= toughness / 2) return 6;
-  return 4; // fallback
+  return 4;
 }
 
+function getFaceCounts(dice) {
+  return Array.from({ length: 6 }, (_, index) => {
+    const value = index + 1;
+    return {
+      value,
+      count: dice.filter((die) => die === value).length,
+    };
+  });
+}
+
+function FaceSummary({ dice }) {
+  return (
+    <div className="face-summary" aria-label="Dice face summary">
+      {getFaceCounts(dice).map(({ value, count }) => (
+        <div key={value} className="face-summary-item" data-face={value}>
+          <span className="face-summary-face">{value}+</span>
+          <span className="face-summary-count">{count}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function App() {
-  // Requirement 1, 2, 7: Inputs and reset
-  // track inputs as strings so we can clear them and meet reset requirement
-  const [numDice, setNumDice] = useState('');
-  // Threshold always starts at 1+
+  const [numDice, setNumDice] = useState('1');
   const [threshold, setThreshold] = useState('1');
   const [results, setResults] = useState([]);
   const [rolling, setRolling] = useState(false);
-  const [hits, setHits] = useState(0);
+  const [rollingHitIndexes, setRollingHitIndexes] = useState([]);
 
-  // Animation state: only true for 0.6s after a roll
-  const [justRolledHits, setJustRolledHits] = useState(false);
-  const [justRolledWounds, setJustRolledWounds] = useState(false);
-
-  // Requirement 8: Wounds tab state
-  const [tab, setTab] = useState('hits'); // 'hits' or 'wounds'
-  const [strength, setStrength] = useState('');
-  const [toughness, setToughness] = useState('');
+  const [tab, setTab] = useState('hits');
+  const [strength, setStrength] = useState('1');
+  const [toughness, setToughness] = useState('1');
   const [woundResults, setWoundResults] = useState([]);
+  const [rollingWoundIndexes, setRollingWoundIndexes] = useState([]);
 
+  const hits = results.filter((die) => die >= Number(threshold)).length;
   const woundThreshold = strength && toughness
     ? getWoundThreshold(Number(strength), Number(toughness))
     : null;
   const wounds = woundThreshold
-    ? woundResults.filter((d) => d >= woundThreshold).length
+    ? woundResults.filter((die) => die >= woundThreshold).length
     : 0;
 
-  // Recalculate hits when threshold or results change
-  React.useEffect(() => {
-    if (results.length > 0) {
-      setHits(results.filter((d) => d >= Number(threshold)).length);
-    }
-  }, [threshold, results]);
+  useEffect(() => {
+    diceRollAudioPool.forEach((audio) => {
+      audio.load();
+    });
+  }, []);
 
-  // User Request: Re-roll all dice that did not meet the WS/BS threshold
-  const handleRerollMisses = () => {
-    if (results.length === 0) return;
+  useEffect(() => {
+    setWoundResults([]);
+    if (hits === 0) {
+      setTab('hits');
+    }
+  }, [hits]);
+
+  const runRollAnimation = (count, setter, setRollingIndexes) => {
     setRolling(true);
+    setRollingIndexes(Array.from({ length: count }, (_, index) => index));
     playDiceRollSound();
-    const animationFrames = 6;
+
+    const animationFrames = 10;
     let frame = 0;
-    const originalResults = [...results];
-    const t = Number(threshold);
+
     const animate = () => {
       if (frame < animationFrames) {
-        setResults((prevResults) => prevResults.map((v, i) => originalResults[i] < t ? Math.floor(Math.random() * 6) + 1 : v));
-        frame++;
+        setter(rollDice(count));
+        frame += 1;
         setTimeout(animate, 50);
-      } else {
-        const rerolled = originalResults.map((v) => (v < t ? Math.floor(Math.random() * 6) + 1 : v));
-        setResults(rerolled);
-        setHits(rerolled.filter((d) => d >= t).length);
-        setRolling(false);
-        setJustRolledHits(true);
-        setTimeout(() => setJustRolledHits(false), 600);
+        return;
       }
+
+      setter(rollDice(count));
+      setRollingIndexes([]);
+      setRolling(false);
     };
+
     animate();
   };
 
-  // Requirement 2: Increment/decrement handlers for dice count and threshold
+  const runSelectiveReroll = (sourceResults, setter, shouldReroll, setRollingIndexes) => {
+    if (sourceResults.length === 0) return;
+
+    setRolling(true);
+    playDiceRollSound();
+
+    const originalResults = [...sourceResults];
+    const rerollIndexes = originalResults
+      .map((value, index) => (shouldReroll(value) ? index : null))
+      .filter((value) => value !== null);
+
+    setRollingIndexes(rerollIndexes);
+
+    const animationFrames = 6;
+    let frame = 0;
+
+    const animate = () => {
+      if (frame < animationFrames) {
+        setter(originalResults.map((value) => (shouldReroll(value) ? Math.floor(Math.random() * 6) + 1 : value)));
+        frame += 1;
+        setTimeout(animate, 50);
+        return;
+      }
+
+      setter(originalResults.map((value) => (shouldReroll(value) ? Math.floor(Math.random() * 6) + 1 : value)));
+      setRollingIndexes([]);
+      setRolling(false);
+    };
+
+    animate();
+  };
+
+  const handleRoll = () => {
+    const diceCount = Number(numDice);
+    if (!diceCount) return;
+    runRollAnimation(diceCount, setResults, setRollingHitIndexes);
+  };
+
+  const handleRerollOnes = () => {
+    runSelectiveReroll(results, setResults, (value) => value === 1, setRollingHitIndexes);
+  };
+
+  const handleRerollMisses = () => {
+    const target = Number(threshold);
+    runSelectiveReroll(results, setResults, (value) => value < target, setRollingHitIndexes);
+  };
+
+  const handleRollWounds = () => {
+    const attackerStrength = Number(strength);
+    const targetToughness = Number(toughness);
+    if (!attackerStrength || !targetToughness || hits === 0) return;
+    runRollAnimation(hits, setWoundResults, setRollingWoundIndexes);
+  };
+
+  const handleRerollWoundOnes = () => {
+    runSelectiveReroll(woundResults, setWoundResults, (value) => value === 1, setRollingWoundIndexes);
+  };
+
+  const handleRerollFailedWounds = () => {
+    if (!woundThreshold) return;
+    runSelectiveReroll(woundResults, setWoundResults, (value) => value < woundThreshold, setRollingWoundIndexes);
+  };
+
   const incrementNumDice = () => {
-    const current = Number(numDice) || 0;
-    setNumDice(Math.min(100, current + 1));
+    const current = Number(numDice) || 1;
+    setNumDice(Math.min(100, current + 1).toString());
   };
+
   const decrementNumDice = () => {
-    const current = Number(numDice) || 0;
-    setNumDice(Math.max(1, current - 1));
+    const current = Number(numDice) || 1;
+    setNumDice(Math.max(1, current - 1).toString());
   };
-  // Only allow 1+ to 6+
+
   const incrementThreshold = () => {
     const current = Number(threshold) || 1;
     setThreshold(Math.min(6, current + 1).toString());
   };
+
   const decrementThreshold = () => {
     const current = Number(threshold) || 1;
     setThreshold(Math.max(1, current - 1).toString());
   };
 
-  // User Request: Re-roll all dice that show a value of 1
-  const handleRerollOnes = () => {
-    if (results.length === 0) return;
-    setRolling(true);
-    playDiceRollSound();
-    const animationFrames = 6;
-    let frame = 0;
-    const originalResults = [...results];
-    const animate = () => {
-      if (frame < animationFrames) {
-        setResults((prevResults) => prevResults.map((v, i) => originalResults[i] === 1 ? Math.floor(Math.random() * 6) + 1 : v));
-        frame++;
-        setTimeout(animate, 50);
-      } else {
-        const rerolled = originalResults.map((v) => (v === 1 ? Math.floor(Math.random() * 6) + 1 : v));
-        setResults(rerolled);
-        setHits(rerolled.filter((d) => d >= Number(threshold)).length);
-        setRolling(false);
-        setJustRolledHits(true);
-        setTimeout(() => setJustRolledHits(false), 600);
-      }
-    };
-    animate();
-  };
-
-  // Requirement 3, 4, 5: Roll dice and count hits
-  const handleRoll = () => {
-    const n = Number(numDice);
-    const t = Number(threshold);
-    if (!n || !t) return;
-    setRolling(true);
-    playDiceRollSound();
-    const animationFrames = 10;
-    let frame = 0;
-    const animate = () => {
-      if (frame < animationFrames) {
-        setResults(rollDice(n));
-        frame++;
-        setTimeout(animate, 50);
-      } else {
-        const dice = rollDice(n);
-        setResults(dice);
-        setHits(dice.filter((d) => d >= t).length);
-        setRolling(false);
-        setJustRolledHits(true);
-        setTimeout(() => setJustRolledHits(false), 600);
-      }
-    };
-    animate();
-  };
-
-  // Requirement 8: Roll wounds dice
-  const handleRollWounds = () => {
-    const s = Number(strength);
-    const t = Number(toughness);
-    if (!s || !t) return;
-    setRolling(true);
-    playDiceRollSound();
-    const animationFrames = 10;
-    let frame = 0;
-    const animate = () => {
-      if (frame < animationFrames) {
-        setWoundResults(rollDice(hits));
-        frame++;
-        setTimeout(animate, 50);
-      } else {
-        const woundDice = rollDice(hits);
-        setWoundResults(woundDice);
-        setRolling(false);
-        setJustRolledWounds(true);
-        setTimeout(() => setJustRolledWounds(false), 600);
-      }
-    };
-    animate();
-  };
-
-  // Requirement 7: Reset/refresh button handler
   const handleReset = () => {
-    setNumDice('');
+    setNumDice('1');
     setThreshold('1');
     setResults([]);
-    setHits(0);
+    setRolling(false);
+    setRollingHitIndexes([]);
     setTab('hits');
-    setStrength('');
-    setToughness('');
+    setStrength('1');
+    setToughness('1');
     setWoundResults([]);
-    // Requirement 7: All input boxes emptied, settings reset, results cleared
+    setRollingWoundIndexes([]);
   };
-
-  // Requirement 8: Update wounds if hits change
-  // (auto-clear wounds when hits change)
-  // eslint-disable-next-line
-  React.useEffect(() => {
-    setWoundResults([]);
-  }, [hits]);
 
   return (
     <div className="dice-roller-container">
-      <h1 className="main-title">IMPERIAL DICE ROLLER</h1>
-      {/* Requirement 8: Tab navigation */}
+      <h1 className="main-title">DICE ROLLER</h1>
+
       <div className="tabs">
         <button
           className={`roll-btn${tab === 'hits' ? ' tab-active' : ''}`}
           onClick={() => setTab('hits')}
-        >HITS</button>
+        >
+          HITS
+        </button>
         <button
           className={`roll-btn${tab === 'wounds' ? ' tab-active' : ''}`}
           onClick={() => setTab('wounds')}
           disabled={hits === 0}
-        >WOUNDS</button>
+        >
+          WOUNDS
+        </button>
       </div>
 
       {tab === 'hits' && (
         <div>
           <div className="inputs">
-            {/* Requirement 2: Custom up/down controls for dice count */}
             <div className="control-group">
-              <label>ATTACKS: </label>
+              <label>ATTACKS:</label>
               <div className="spinner-control">
                 <button className="spinner-btn" onClick={decrementNumDice}>−</button>
                 <input
                   type="text"
                   inputMode="numeric"
                   className="spinner-input"
-                  placeholder="0"
+                  placeholder="1"
                   value={numDice}
                   onChange={(e) => {
-                    const v = e.target.value;
-                    setNumDice(v === '' ? '' : Math.max(1, Math.min(100, Number(v))));
+                    const value = e.target.value;
+                    if (value === '' || Number.isNaN(Number(value))) {
+                      setNumDice('1');
+                      return;
+                    }
+                    setNumDice(Math.max(1, Math.min(100, Number(value))).toString());
                   }}
                 />
                 <button className="spinner-btn" onClick={incrementNumDice}>+</button>
               </div>
             </div>
 
-            {/* Requirement 2: Custom up/down controls for threshold */}
             <div className="control-group">
               <label>WS/BS:</label>
               <div className="spinner-control">
@@ -251,17 +264,14 @@ function App() {
                   inputMode="numeric"
                   className="spinner-input"
                   placeholder="1+"
-                  value={threshold ? `${threshold}+` : ''}
+                  value={`${threshold}+`}
                   onChange={(e) => {
-                    // Accept input like '4+' or '4', strip trailing plus
-                    let v = e.target.value.replace(/\+$/, '');
-                    // Only allow 1-6
-                    if (v === '' || isNaN(Number(v))) {
+                    const rawValue = e.target.value.replace(/\+/g, '');
+                    if (rawValue === '' || Number.isNaN(Number(rawValue))) {
                       setThreshold('1');
-                    } else {
-                      let num = Math.max(1, Math.min(6, Number(v)));
-                      setThreshold(num.toString());
+                      return;
                     }
+                    setThreshold(Math.max(1, Math.min(6, Number(rawValue))).toString());
                   }}
                 />
                 <button className="spinner-btn" onClick={incrementThreshold}>+</button>
@@ -269,36 +279,42 @@ function App() {
             </div>
 
             <div className="button-group">
-              <button className="roll-btn" onClick={handleRoll} disabled={rolling || !numDice || !threshold}>{rolling ? 'ADVANCING...' : 'ROLL'}</button>
-              <button className="roll-btn" onClick={handleRerollOnes} disabled={rolling || results.length === 0 || !results.includes(1)}>RE-ROLL 1s</button>
-              <button className="roll-btn" onClick={handleRerollMisses} disabled={rolling || results.length === 0 || results.every((v) => v >= Number(threshold))}>RE-ROLL MISSES</button>
-              {/* Requirement 7: Reset/refresh button */}
+              <button className="roll-btn" onClick={handleRoll} disabled={rolling}>
+                {rolling ? 'ROLLING...' : 'ROLL'}
+              </button>
+              <button
+                className="roll-btn"
+                onClick={handleRerollOnes}
+                disabled={rolling || results.length === 0 || !results.includes(1)}
+              >
+                RE-ROLL 1s
+              </button>
+              <button
+                className="roll-btn"
+                onClick={handleRerollMisses}
+                disabled={rolling || results.length === 0 || results.every((value) => value >= Number(threshold))}
+              >
+                RE-ROLL MISSES
+              </button>
               <button className="roll-btn reset-btn" onClick={handleReset}>REFRESH</button>
             </div>
           </div>
+
           {results.length > 0 && (
             <div className="results">
-              <p style={{ color: '#D4AF37', fontWeight: 700, fontSize: '1.1em', letterSpacing: '1px', marginBottom: '0.5em' }}>
-                Successful Hits: <strong>{hits}</strong>
+              <p className="result-total">
+                SUCCESSFUL HITS: <strong>{hits}</strong>
               </p>
-              {/* Dice value summary */}
-              <div style={{ margin: '0.5em 0', color: '#D4AF37', fontWeight: 700, fontSize: '1em', letterSpacing: '1px' }}>
-                {Array.from({ length: 6 }, (_, i) => i + 1).map((val) => {
-                  const count = results.filter((d) => d === val).length;
-                  return (
-                    <span key={val} style={{ marginRight: '1.2em' }}>{val}+ : {count} </span>
-                  );
-                })}
-              </div>
+
+              <FaceSummary dice={results} />
+
               <div className="dice-list">
-                {results.map((value, idx) => (
+                {results.map((value, index) => (
                   <span
-                    key={idx}
-                    className={
-                      (justRolledHits ? 'dice-anim ' : '') + (value >= Number(threshold) ? 'hit' : '')
-                    }
+                    key={`${value}-${index}`}
+                    className={`dice-face${rollingHitIndexes.includes(index) ? ' rolling' : ''}${value >= Number(threshold) ? ' hit' : ''}`}
                   >
-                    {value}
+                    <span className="dice-value">{value}</span>
                   </span>
                 ))}
               </div>
@@ -307,89 +323,105 @@ function App() {
         </div>
       )}
 
-      {/* Requirement 8: Wounds tab */}
       {tab === 'wounds' && (
-        <div>
+        <div className="wounds-tab">
+          <div className="wound-summary-wrap">
+            <div className="wound-summary-bar">
+              <span className="wound-summary-item">
+                SUCCESSFUL ATTACKS: {hits}
+              </span>
+              <span className="wound-summary-item wound-summary-threshold">
+                TO WOUND: {woundThreshold ? `${woundThreshold}+` : '-'}
+              </span>
+            </div>
+          </div>
+
           <div className="inputs">
-            {/* Requirement 2: Custom up/down controls for strength */}
             <div className="control-group">
               <label>ATTACKER STRENGTH:</label>
               <div className="spinner-control">
-                <button className="spinner-btn" onClick={() => setStrength(Math.max(1, Number(strength) - 1) || '')}>−</button>
+                <button className="spinner-btn" onClick={() => setStrength(Math.max(1, Number(strength || 1) - 1).toString())}>−</button>
                 <input
                   type="text"
                   inputMode="numeric"
                   className="spinner-input"
-                  placeholder="0"
+                  placeholder="1"
                   value={strength}
                   onChange={(e) => {
-                    const v = e.target.value;
-                    setStrength(v === '' ? '' : Math.max(1, Math.min(20, Number(v))));
+                    const value = e.target.value;
+                    if (value === '' || Number.isNaN(Number(value))) {
+                      setStrength('1');
+                      return;
+                    }
+                    setStrength(Math.max(1, Math.min(20, Number(value))).toString());
                   }}
                 />
-                <button className="spinner-btn" onClick={() => setStrength(Math.min(20, Number(strength) + 1) || '')}>+</button>
+                <button className="spinner-btn" onClick={() => setStrength(Math.min(20, Number(strength || 0) + 1).toString())}>+</button>
               </div>
             </div>
 
-            {/* Requirement 2: Custom up/down controls for toughness */}
             <div className="control-group">
               <label>TARGET TOUGHNESS:</label>
               <div className="spinner-control">
-                <button className="spinner-btn" onClick={() => setToughness(Math.max(1, Number(toughness) - 1) || '')}>−</button>
+                <button className="spinner-btn" onClick={() => setToughness(Math.max(1, Number(toughness || 1) - 1).toString())}>−</button>
                 <input
                   type="text"
                   inputMode="numeric"
                   className="spinner-input"
-                  placeholder="0"
+                  placeholder="1"
                   value={toughness}
                   onChange={(e) => {
-                    const v = e.target.value;
-                    setToughness(v === '' ? '' : Math.max(1, Math.min(20, Number(v))));
+                    const value = e.target.value;
+                    if (value === '' || Number.isNaN(Number(value))) {
+                      setToughness('1');
+                      return;
+                    }
+                    setToughness(Math.max(1, Math.min(20, Number(value))).toString());
                   }}
                 />
-                <button className="spinner-btn" onClick={() => setToughness(Math.min(20, Number(toughness) + 1) || '')}>+</button>
+                <button className="spinner-btn" onClick={() => setToughness(Math.min(20, Number(toughness || 0) + 1).toString())}>+</button>
               </div>
             </div>
 
             <div className="button-group">
-              <button className="roll-btn" onClick={handleRollWounds} disabled={hits === 0 || rolling || !strength || !toughness}>{rolling ? 'CALCULATING...' : 'ROLL'}</button>
+              <button
+                className="roll-btn"
+                onClick={handleRollWounds}
+                disabled={hits === 0 || rolling || !strength || !toughness}
+              >
+                {rolling ? 'ROLLING...' : 'ROLL'}
+              </button>
+              <button
+                className="roll-btn"
+                onClick={handleRerollWoundOnes}
+                disabled={rolling || woundResults.length === 0 || !woundResults.includes(1)}
+              >
+                RE-ROLL 1s
+              </button>
+              <button
+                className="roll-btn"
+                onClick={handleRerollFailedWounds}
+                disabled={rolling || woundResults.length === 0 || !woundThreshold || woundResults.every((value) => value >= woundThreshold)}
+              >
+                RE-ROLL FAILED WOUNDS
+              </button>
               <button className="roll-btn reset-btn" onClick={handleReset}>REFRESH</button>
             </div>
           </div>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', margin: '1.2em 0' }}>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: '2.5em',
-              fontWeight: 700,
-              color: '#D4AF37',
-              fontSize: '1.08em',
-              letterSpacing: '1px',
-              background: 'rgba(34, 34, 34, 0.7)',
-              borderRadius: '0.7em',
-              boxShadow: '0 0 10px rgba(212,175,55,0.10)',
-              padding: '0.7em 1.5em',
-              border: '1.5px solid #D4AF37',
-            }}>
-              <span style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>SUCCESSFUL ATTACKS: {hits}</span>
-              <span style={{ textAlign: 'center', minWidth: '180px' }}>TO WOUND: {woundThreshold ? `${woundThreshold}+` : '-'}</span>
-            </div>
-          </div>
+
           {woundResults.length > 0 && (
             <div className="results">
-              <p style={{ color: '#D4AF37', fontWeight: 700, fontSize: '1.1em', letterSpacing: '1px', marginBottom: '0.5em' }}>
+              <p className="result-total">
                 SUCCESSFUL WOUNDS: <strong>{wounds}</strong>
               </p>
+              <FaceSummary dice={woundResults} />
               <div className="dice-list">
-                {woundResults.map((value, idx) => (
+                {woundResults.map((value, index) => (
                   <span
-                    key={idx}
-                    className={
-                      (justRolledWounds ? 'dice-anim ' : '') + (woundThreshold && value >= woundThreshold ? 'hit' : '')
-                    }
+                    key={`${value}-${index}`}
+                    className={`dice-face${rollingWoundIndexes.includes(index) ? ' rolling' : ''}${woundThreshold && value >= woundThreshold ? ' hit' : ''}`}
                   >
-                    {value}
+                    <span className="dice-value">{value}</span>
                   </span>
                 ))}
               </div>
@@ -400,6 +432,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;

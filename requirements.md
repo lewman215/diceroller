@@ -1,6 +1,6 @@
 
 
-# Imperial Dice Roller — Requirements (as implemented)
+# Dice Roller — Requirements (as implemented)
 
 ## Functional Requirements (Current App)
 
