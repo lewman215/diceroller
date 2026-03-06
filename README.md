@@ -1,16 +1,31 @@
-# React + Vite
+# Dice Roller
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a React + Vite dice roller app with PowerShell launch scripts that support portable Node.js on Windows.
 
-Currently, two official plugins are available:
+## Portable Node.js Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+If you cannot install Node.js system-wide, use the official Windows x64 zip distribution from https://nodejs.org/en/download.
 
-## React Compiler
+Extract it to either of these locations:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `.tools/node/node-v24.14.0-win-x64` inside this repo
+- `%USERPROFILE%\node-portable\node-v24.14.0-win-x64`
 
-## Expanding the ESLint configuration
+The scripts also accept any folder matching `node-v*-win-x64` in those locations and will use the newest match if the preferred version is not present.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Scripts
+
+- `./portable-node.ps1`: Shared helper that resolves and initializes the portable Node.js runtime.
+- `./start-dev.ps1`: Adds portable Node.js to `PATH`, installs dependencies if needed, and starts Vite dev mode.
+- `./start-build.ps1`: Adds portable Node.js to `PATH`, installs dependencies if needed, and runs the production build.
+
+## Manual Commands
+
+If you want to run commands manually in PowerShell:
+
+```powershell
+$nodeDir = Join-Path $env:USERPROFILE 'node-portable\node-v24.14.0-win-x64'
+$env:Path = "$nodeDir;$env:Path"
+npm run dev
+npm run build
+```
